@@ -4,12 +4,17 @@ Plugin Name: Custom Slugs for bbPress Messages
 Plugin URI: https://github.com/elhardoum/bbpm-custom-slugs
 Description: Custom Slugs for bbPress Messages WordPress Plugin. <em>(Visit bbPress Messages settings page to adjust slugs)</em>
 Author: Samuel Elh
-Version: 0.1
+Version: 0.2
 Author URI: https://samelh.com
 Donate link: https://paypal.me/samelh
 */
 
 add_action('bbpm_init_class', function($class){
+    global $bbpm_custom_slugs_bases;
+    $bbpm_custom_slugs_bases = $class->bases;
+    $bbpm_custom_slugs_bases = array_map('__return_null', $bbpm_custom_slugs_bases);
+    unset($bbpm_custom_slugs_bases['rewrite_base']);
+
     $bcs = bbpm_custom_slugs();
 
     if ( !empty($bcs['slugs']) )
@@ -21,17 +26,13 @@ add_action('bbpm_init_class', function($class){
     foreach ( $bcs['slugs'] as $p=>$v ) {
         $class->bases[$p] = $v;
     }
-});
+}, 99);
 
 function bbpm_custom_slugs() {
+    global $bbpm_custom_slugs_bases;
+
     return array(
-        'slugs' => wp_parse_args(bbpm_custom_slugs_entries(), array(
-            'messages_base' => null,
-            'page_base' => null,
-            'settings_base' => null,
-            'new' => null,
-            'with' => null
-        )),
+        'slugs' => wp_parse_args(bbpm_custom_slugs_entries(), $bbpm_custom_slugs_bases),
         'about' => array(
             'messages_base' => __('Messages (/messages)'),
             'page_base' => __('Pagination (/messages/page/x)'),
@@ -104,6 +105,7 @@ function bbpm_custom_slugs_update_settings() {
         return;
 
     global $bbpm_bases;
+
     $opt = array();
 
     foreach ( array_keys($bcs['slugs']) as $prop ) {
